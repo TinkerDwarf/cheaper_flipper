@@ -363,6 +363,7 @@
  C:/.platformio/packages/framework-arduinoespressif32-libs/esp32s3/include/esp_netif/include/esp_netif.h \
  C:/.platformio/packages/framework-arduinoespressif32-libs/esp32s3/include/esp_netif/include/esp_netif_types.h \
  C:/.platformio/packages/framework-arduinoespressif32-libs/esp32s3/include/esp_netif/include/esp_netif_defaults.h \
+ src/wifi/../SdUsb/SDCardManager.h include/buttons.h \
  .pio/libdeps/esp32-s3-devkitm-1/Politician/src/Politician.h \
  .pio/libdeps/esp32-s3-devkitm-1/Politician/src/PoliticianTypes.h \
  .pio/libdeps/esp32-s3-devkitm-1/Politician/src/PoliticianFormat.h

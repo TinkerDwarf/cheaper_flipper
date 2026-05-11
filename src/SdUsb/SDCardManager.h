@@ -8,21 +8,12 @@
 
 class SDCardManager {
 public:
-    /**
-     * @param tft       ссылка на объект дисплея
-     * @param width     ширина экрана в пикселях
-     * @param height    высота экрана в пикселях
-     */
     SDCardManager(LGFX& tft, uint16_t width, uint16_t height);
 
-    /**
-     * Инициализация SD-карты с заданными пинами.
-     * @return true, если карта успешно обнаружена и смонтирована.
-     */
     bool init();
 
-    /// Проверка наличия карты
-    bool isCardPresent() const { return _sdCardPresent; }
+    /// Проверка наличия карты – теперь статический метод, доступный отовсюду
+    static bool isCardPresent();
 
     /// Запуск файлового менеджера (блокирующий цикл)
     void handleFileManager();
@@ -31,15 +22,15 @@ private:
     LGFX*              _tft;
     uint16_t           _screenWidth;
     uint16_t           _screenHeight;
-    float              _scaleX;       // scaleX = screenWidth / 240.0
-    float              _scaleY;       // scaleY = screenHeight / 320.0
-    bool               _sdCardPresent;
+    float              _scaleX;
+    float              _scaleY;
 
-    // Вспомогательные методы масштабирования
+    // Статический флаг, отражающий реальное состояние SD-карты
+    static bool _sdCardPresent;
+
     int16_t scX(int16_t x) const { return (int16_t)(x * _scaleX); }
     int16_t scY(int16_t y) const { return (int16_t)(y * _scaleY); }
 
-    // Внутренние структуры состояния
     struct FileBrowserState {
         String currentPath = "/";
         int selectedIndex = 0;
@@ -68,7 +59,6 @@ private:
     FileBrowserState _browser;
     FileReaderState  _reader;
 
-    // Приватные методы работы с файловой системой и UI
     void updateFileList();
     void initFileBrowser();
     File getFileByIndex(int index);

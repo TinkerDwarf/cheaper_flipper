@@ -49,7 +49,6 @@ int JAMCH = 10; // Для Selective Jam
 bool isJammingActive = false;
 
 // Состояние системы
-bool sdCardPresent = false;
 bool darkTheme = true;
 uint8_t currentMenu = 0;
 uint8_t menuPosition = 0;
@@ -290,7 +289,7 @@ SDCardManager sdManager(tft, 480, 320);  // размеры нового дисп
 
 //=======================LOGS========================
 void createWiFiConfig() {
-    if (!sdCardPresent) {
+    if (!SDCardManager::isCardPresent()) {
         Serial.println("SD card not present for config creation");
         return;
     }
@@ -340,7 +339,7 @@ void createWiFiConfig() {
 
 // Обновленная функция чтения конфига
 void readWiFiConfig() {
-    if (!sdCardPresent) return;
+    if (!SDCardManager::isCardPresent()) return;
     
     // Проверяем существование конфиг-файла
     if (!SD_MMC.exists("/config.txt")) {
@@ -376,7 +375,7 @@ void readWiFiConfig() {
     configFile.close();
 }
 void saveConfig() {
-    if (!sdCardPresent) return;
+    if (!SDCardManager::isCardPresent()) return;
     
     File configFile = SD_MMC.open("/config.txt", FILE_WRITE);
     if (!configFile) {
@@ -392,7 +391,7 @@ void saveConfig() {
     Serial.println("Config saved");
 }
 void logAttack(const String& attackType, const String& target, const String& status) {
-    if (!sdCardPresent || incognitoMode) return;
+    if (!SDCardManager::isCardPresent() || incognitoMode) return;
     
     File logFile = SD_MMC.open(LOG_FILE, FILE_APPEND);
     if (!logFile) {
@@ -414,7 +413,7 @@ void logAttack(const String& attackType, const String& target, const String& sta
     Serial.println("Attack logged: " + attackType + " - " + target + " - " + status);
 }
 void viewAttackLogs() {
-    if (!sdCardPresent) {
+    if (!SDCardManager::isCardPresent()) {
         tft.fillScreen(BLACK);
         tft.setTextColor(RED);
         tft.setTextSize(2);
@@ -549,7 +548,7 @@ void listBadUSBScripts(bool forceRedraw = false) {
   tft.setCursor(10, 10);
   tft.print("BadUSB Scripts");
   
-  if (!sdCardPresent) {
+  if (!SDCardManager::isCardPresent()) {
     tft.setTextColor(RED);
     tft.setCursor(10, 50);
     tft.print("SD Card not found!");
@@ -926,7 +925,7 @@ void executeBadUSBScript(String scriptPath) {
   isBadUSBActive = false;
 }
 void handleBadUSB() {
-  if (!sdCardPresent) {
+  if (!SDCardManager::isCardPresent()) {
     tft.fillScreen(BLACK);
     tft.setTextColor(RED);
     tft.setTextSize(2);
@@ -1049,7 +1048,7 @@ String localIP = "";
 
 // Недостающие функции
 void createDefaultConfig() {
-    if (!sdCardPresent) return;
+    if (!SDCardManager::isCardPresent()) return;
     
     File configFile = SD_MMC.open("/config.txt", FILE_WRITE);
     if (!configFile) return;
@@ -1115,12 +1114,12 @@ uint64_t calculateDirectorySize(const char* directoryPath) {
     return totalSize;
 }
 uint64_t calculateUsedSpace() {
-    if (!sdCardPresent) return 0;
+    if (!SDCardManager::isCardPresent()) return 0;
     return calculateDirectorySize("/");
 }
 // Чтение конфигурации WiFi из config.txt
 void readWiFiStorageConfig() {
-    if (!sdCardPresent) return;
+    if (!SDCardManager::isCardPresent()) return;
     
     if (!SD_MMC.exists("/config.txt")) {
         createDefaultConfig();
@@ -1195,7 +1194,7 @@ void handleRoot() {
     html.replace("%IP%", localIP);
     
     // Получаем информацию о свободном месте
-    if (sdCardPresent) {
+    if (SDCardManager::isCardPresent()) {
         uint64_t totalSize = SD_MMC.cardSize();
         uint64_t usedSpace = calculateUsedSpace();
         uint64_t freeSpace = totalSize - usedSpace;
@@ -1450,7 +1449,7 @@ void drawWiFiStorageScreen(bool forceRedraw = false) {
     tft.print("WiFi Storage");
     tft.drawLine(0, 35, 240, 35, WHITE);
     
-    if (!sdCardPresent) {
+    if (!SDCardManager::isCardPresent()) {
         tft.setTextColor(RED);
         tft.setTextSize(2);
         tft.setCursor(20, 60);
@@ -1779,7 +1778,7 @@ void drawMassStorageMenu(bool forceRedraw = false) {
     }
     
     // Информация о SD карте
-    if (sdCardPresent) {
+    if (SDCardManager::isCardPresent()) {
         uint64_t cardSize = SD_MMC.cardSize();
         uint64_t usedSpace = calculateUsedSpace();
         uint64_t freeSpace = cardSize - usedSpace;
@@ -1860,7 +1859,7 @@ void startmsc() {
         return;
     }
     
-    if (!sdCardPresent) {
+    if (!SDCardManager::isCardPresent()) {
         tft.fillScreen(BLACK);
         tft.setTextColor(RED);
         tft.setTextSize(2);
@@ -3113,7 +3112,7 @@ String readArduinoRFIDTag() {
         currentRFIDTag = tagHex;
         
         // Логирование обнаружения метки
-        if (sdCardPresent && !incognitoMode) {
+        if (SDCardManager::isCardPresent() && !incognitoMode) {
             logAttack("RFID_ARDUINO_READ", "TAG_" + tagHex, "DETECTED");
         }
         
@@ -3135,7 +3134,7 @@ bool writeArduinoRFIDTag(String tagHex) {
         Serial.println("RFID write successful");
         
         // Логирование записи
-        if (sdCardPresent && !incognitoMode) {
+        if (SDCardManager::isCardPresent() && !incognitoMode) {
             logAttack("RFID_ARDUINO_WRITE", "TAG_" + tagHex, "SUCCESS");
         }
         
@@ -3157,7 +3156,7 @@ void emulateArduinoRFIDTag(String tagHex) {
         Serial.println("RFID emulation completed");
         
         // Логирование эмуляции
-        if (sdCardPresent && !incognitoMode) {
+        if (SDCardManager::isCardPresent() && !incognitoMode) {
             logAttack("RFID_ARDUINO_EMULATE", "TAG_" + tagHex, "COMPLETED");
         }
     } else {
@@ -3165,7 +3164,7 @@ void emulateArduinoRFIDTag(String tagHex) {
     }
 }
 bool saveRFIDTagToSD(const String& tagCode) {
-    if (!sdCardPresent) {
+    if (!SDCardManager::isCardPresent()) {
         Serial.println("SD card not present for saving RFID tag");
         return false;
     }
@@ -3666,7 +3665,7 @@ void handleArduinoRFIDEmulate() {
 }
 // ==================== VIEW SAVED RFID TAGS ====================
 void viewSavedRFIDTags() {
-    if (!sdCardPresent) {
+    if (!SDCardManager::isCardPresent()) {
         tft.fillScreen(BLACK);
         tft.setTextColor(RED);
         tft.setTextSize(2);
@@ -3856,7 +3855,8 @@ void viewSavedRFIDTags() {
 //==========================Wi-FI============================
 #include "wifi/wifi_func.h"
 
-WiFiAttackManager wifiAttack(tft, 480, 320, btnUp, btnDown, btnLeft, btnRight, btnOK, sdCardPresent, "/logs/attack_log.txt", incognitoMode);
+WiFiAttackManager wifiAttack(tft, 480, 320, btnUp, btnDown, btnLeft, btnRight, btnOK, "/logs/attack_log.txt", incognitoMode);
+
 
 //=====================MAIN===================
 void handleSubmenuAction() {
@@ -4022,7 +4022,7 @@ void handleSubmenuAction() {
           incognitoMode = !incognitoMode;
           
           // Сохраняем настройку на SD карту
-          if (sdCardPresent) {
+          if (SDCardManager::isCardPresent()) {
             File configFile = SD_MMC.open("/config.txt", FILE_WRITE);
             if (configFile) {
               configFile.println("SSID=" + String(wifi_ssid));
@@ -4238,13 +4238,13 @@ void setup() {
 
 
 // Создание папки для RFID меток если SD карта присутствует
-if (sdCardPresent && !SD_MMC.exists(arduinoRFIDFolder)) {
+if (SDCardManager::isCardPresent() && !SD_MMC.exists(arduinoRFIDFolder)) {
     SD_MMC.mkdir(arduinoRFIDFolder);
     Serial.println("Created RFID tags directory");
   }
 
   // Инициализация папки для Sub-GHz сигналов
-if (sdCardPresent && !SD_MMC.exists("/subghz_signals")) {
+if (SDCardManager::isCardPresent() && !SD_MMC.exists("/subghz_signals")) {
     SD_MMC.mkdir("/subghz_signals");
     Serial.println("Created Sub-GHz signals directory");
 }

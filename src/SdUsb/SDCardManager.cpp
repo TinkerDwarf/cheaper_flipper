@@ -1,12 +1,14 @@
 #include "SDCardManager.h"
 
-// Пины для SD_MMC (можно оставить глобальными или передавать)
 #define SDMMC_CLK 46
 #define SDMMC_CMD 9
 #define SDMMC_D0  4
 #define SDMMC_D1  5
 #define SDMMC_D2  6
 #define SDMMC_D3  7
+
+// Определение статического члена
+bool SDCardManager::_sdCardPresent = false;
 
 // ---- Конструктор ----------------------------------------------------------
 SDCardManager::SDCardManager(LGFX& tft, uint16_t width, uint16_t height)
@@ -15,8 +17,12 @@ SDCardManager::SDCardManager(LGFX& tft, uint16_t width, uint16_t height)
     , _screenHeight(height)
     , _scaleX(width / 240.0f)
     , _scaleY(height / 320.0f)
-    , _sdCardPresent(false)
 {}
+
+// ---- Статический геттер ---------------------------------------------------
+bool SDCardManager::isCardPresent() {
+    return _sdCardPresent;
+}
 
 // ---- Инициализация SD -----------------------------------------------------
 bool SDCardManager::init() {
@@ -316,13 +322,12 @@ void SDCardManager::drawFileManagerPartial(bool forceRedraw) {
 
     _tft->fillScreen(BLACK);
 
-    // Заголовок
     _tft->setTextColor(WHITE);
     _tft->setTextSize(2);
     _tft->setCursor(scX(10), scY(10));
     _tft->print("File Manager");
 
-    if (!_sdCardPresent) {
+    if (!isCardPresent()) {   // <-- используем статический метод
         _tft->setTextColor(RED);
         _tft->setCursor(scX(10), scY(50));
         _tft->print("SD Card not found!");
@@ -334,7 +339,6 @@ void SDCardManager::drawFileManagerPartial(bool forceRedraw) {
         return;
     }
 
-    // Путь
     _tft->setTextSize(1);
     _tft->setCursor(scX(10), scY(35));
     _tft->print("Path: ");
@@ -357,7 +361,6 @@ void SDCardManager::drawFileManagerPartial(bool forceRedraw) {
         return;
     }
 
-    // Список файлов
     int startIndex = (_browser.currentPage - 1) * 7;
     int endIndex = min(startIndex + 7, _browser.fileCount);
     int yPos = scY(55);
@@ -381,7 +384,6 @@ void SDCardManager::drawFileManagerPartial(bool forceRedraw) {
         File entry = dir.openNextFile();
         if (!entry) break;
 
-        // Выделение
         if (i == _browser.selectedIndex) {
             _tft->fillRect(0, yPos - scY(2), scX(240), scY(20) + scY(4), BLUE);
             _tft->setTextColor(BLACK);
@@ -418,7 +420,6 @@ void SDCardManager::drawFileManagerPartial(bool forceRedraw) {
     }
     dir.close();
 
-    // Информация о позиции
     _tft->setTextSize(1);
     _tft->setTextColor(LIGHT_GREY);
     _tft->setCursor(scX(10), scY(200));
@@ -438,7 +439,7 @@ void SDCardManager::drawFileManagerPartial(bool forceRedraw) {
 }
 
 void SDCardManager::handleFileManager() {
-    if (!_sdCardPresent) { delay(1000); return; }
+    if (!isCardPresent()) { delay(1000); return; }   // <-- статический метод
 
     initFileBrowser();
     bool inFileManager = true;

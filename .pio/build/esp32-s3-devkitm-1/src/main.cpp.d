@@ -462,4 +462,4 @@
  src/webstorrage.h \
  C:/.platformio/packages/framework-arduinoespressif32/cores/esp32/HardwareSerial.h \
  src/wifi/wifi_func.h src/wifi/definitions.h src/wifi/deauth.h \
- src/wifi/types.h
+ src/wifi/types.h src/wifi/../SdUsb/SDCardManager.h

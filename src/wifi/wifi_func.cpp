@@ -6,25 +6,25 @@
 #include <PoliticianFormat.h>
 using namespace politician;
 using namespace politician::format;
+
 // --- Глобальные объекты для PMKID-атаки ---
 static Politician pmkEngine;
 static bool pmkEngineInitialized = false;
 static bool handshakeCaptured = false;
 static String lastHC22000 = "";
-// Колбэк при успешном захвате рукопожатия
+
 void pmkOnHandshake(const HandshakeRecord &rec) {
     Serial.println("PMKID Handshake captured!");
     lastHC22000 = toHC22000(rec);
     handshakeCaptured = true;
 }
-
 // ================== Конструктор ==================
 WiFiAttackManager::WiFiAttackManager(LGFX& display, uint16_t displayWidth, uint16_t displayHeight,
                                      Bounce& up, Bounce& down, Bounce& left, Bounce& right, Bounce& ok,
-                                     bool sdCardPresent, const String& logFilePath, bool incognitoMode)
+                                     const String& logFilePath, bool incognitoMode)
     : tft(display), _w(displayWidth), _h(displayHeight),
       btnUp(up), btnDown(down), btnLeft(left), btnRight(right), btnOK(ok),
-      _sdCardPresent(sdCardPresent), _logFile(logFilePath), _incognitoMode(incognitoMode),
+      _logFile(logFilePath), _incognitoMode(incognitoMode),
       _numNetworks(0), _selectedAPIndex(0), _attackMenuPos(0),
       _isAttacking(false), _currentAttack("")
 {}
@@ -39,7 +39,7 @@ void WiFiAttackManager::updateButtons() {
 }
 
 void WiFiAttackManager::logAttack(const String& type, const String& target, const String& status) {
-    if (!_sdCardPresent || _incognitoMode) return;
+    if (!SDCardManager::isCardPresent() || _incognitoMode) return;
     File logFile = SD_MMC.open(_logFile, FILE_APPEND);
     if (!logFile) return;
 
@@ -61,7 +61,6 @@ void WiFiAttackManager::initAttackMode() {
         esp_wifi_set_channel(_aps[_selectedAPIndex].channel, WIFI_SECOND_CHAN_NONE);
     }
 }
-
 // ================== Сканирование и отрисовка списка ==================
 void WiFiAttackManager::scanWiFiNetworks() {
     tft.fillScreen(BLACK);
@@ -88,9 +87,8 @@ void WiFiAttackManager::scanWiFiNetworks() {
     saveScanResults();
     drawWiFiList();
 }
-
 void WiFiAttackManager::saveScanResults() {
-    if (!_sdCardPresent) return;
+    if (!SDCardManager::isCardPresent()) return;
     File file = SD_MMC.open("/wifi/wifi_scan_results.txt", FILE_WRITE);
     if (!file) return;
 
@@ -108,7 +106,6 @@ void WiFiAttackManager::saveScanResults() {
     }
     file.close();
 }
-
 void WiFiAttackManager::drawWiFiList() {
     tft.fillScreen(BLACK);
     tft.setTextColor(WHITE);
@@ -131,7 +128,6 @@ void WiFiAttackManager::drawWiFiList() {
         tft.print(" ("); tft.print(_aps[i].rssi); tft.print("dBm)");
     }
 
-    // Подсказки
     tft.setTextColor(LIGHT_GREY);
     tft.setCursor(x(10), y(280));
     tft.print("OK-Select");
@@ -140,7 +136,6 @@ void WiFiAttackManager::drawWiFiList() {
     tft.setCursor(x(200), y(280));
     tft.print("Rescan");
 }
-
 // ================== Меню атаки ==================
 void WiFiAttackManager::drawAttackMenu() {
     tft.fillScreen(BLACK);
@@ -277,7 +272,7 @@ void WiFiAttackManager::handleEvilTwin() {
 }
 
 bool WiFiAttackManager::saveHC22000(const String& hc22000, const String& ssid, const uint8_t* bssid) {
-    if (!_sdCardPresent) return false;
+    if (!SDCardManager::isCardPresent()) return false;
     if (!SD_MMC.exists("/pmkid_captures")) {
         if (!SD_MMC.mkdir("/pmkid_captures")) return false;
     }
