@@ -25,12 +25,6 @@ LGFX tft;
 #define TFT_BL 45
 #define TFT_WIDTH 320
 
-// WebServer server(80);
-int num_networks;
-
-
-int JAMCH = 10; // Для Selective Jam
-
 // Добавим определение min/max если они отсутствуют
 #ifndef min
 #define min(a,b) ((a)<(b)?(a):(b))
@@ -39,14 +33,6 @@ int JAMCH = 10; // Для Selective Jam
 #ifndef max
 #define max(a,b) ((a)>(b)?(a):(b))
 #endif
-
-
-
-#define BEACON_FRAME 0x80
-#define MAX_APS 20
-
-
-bool isJammingActive = false;
 
 // Состояние системы
 bool darkTheme = true;

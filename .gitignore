@@ -1,2 +1,8 @@
 .pio
 .vscode
+.pio/build/esp32-s3-devkitm-1/.sconsign311.dblite
+.pio/build/esp32-s3-devkitm-1/firmware.bin
+.pio/build/esp32-s3-devkitm-1/firmware.elf
+.pio/build/esp32-s3-devkitm-1/firmware.factory.bin
+.pio/build/esp32-s3-devkitm-1/firmware.map
+.pio/build/esp32-s3-devkitm-1/src/main.cpp.o
