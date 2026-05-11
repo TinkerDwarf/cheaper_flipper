@@ -225,7 +225,7 @@
  C:/.platformio/packages/framework-arduinoespressif32-libs/esp32s3/include/sdmmc/include/sd_pwr_ctrl.h \
  C:/.platformio/packages/framework-arduinoespressif32-libs/esp32s3/include/esp_hw_support/dma/include/esp_dma_utils.h \
  C:/.platformio/packages/framework-arduinoespressif32/libraries/SD_MMC/src/sd_defines.h \
- .pio/libdeps/esp32-s3-devkitm-1/Bounce2/src/Bounce2.h include/display.h \
+ include/display.h \
  .pio/libdeps/esp32-s3-devkitm-1/LovyanGFX/src/LovyanGFX.hpp \
  .pio/libdeps/esp32-s3-devkitm-1/LovyanGFX/src/lgfx/v1_init.hpp \
  .pio/libdeps/esp32-s3-devkitm-1/LovyanGFX/src/lgfx/v1/gitTagVersion.h \
@@ -356,6 +356,7 @@
  .pio/libdeps/esp32-s3-devkitm-1/LovyanGFX/src/lgfx/v1/touch/Touch_TT21xxx.hpp \
  .pio/libdeps/esp32-s3-devkitm-1/LovyanGFX/src/lgfx/v1/touch/Touch_XPT2046.hpp \
  .pio/libdeps/esp32-s3-devkitm-1/LovyanGFX/src/lgfx/v1/touch/Touch_RA8875.hpp \
+ include/buttons.h .pio/libdeps/esp32-s3-devkitm-1/Bounce2/src/Bounce2.h \
  src/wifi/definitions.h src/wifi/deauth.h src/wifi/types.h \
  C:/.platformio/packages/framework-arduinoespressif32-libs/esp32s3/include/esp_wifi/include/esp_wifi.h \
  C:/.platformio/packages/framework-arduinoespressif32-libs/esp32s3/include/esp_wifi/include/esp_wifi_crypto_types.h \
@@ -363,7 +364,7 @@
  C:/.platformio/packages/framework-arduinoespressif32-libs/esp32s3/include/esp_netif/include/esp_netif.h \
  C:/.platformio/packages/framework-arduinoespressif32-libs/esp32s3/include/esp_netif/include/esp_netif_types.h \
  C:/.platformio/packages/framework-arduinoespressif32-libs/esp32s3/include/esp_netif/include/esp_netif_defaults.h \
- src/wifi/../SdUsb/SDCardManager.h include/buttons.h \
+ src/wifi/../SdUsb/SDCardManager.h \
  .pio/libdeps/esp32-s3-devkitm-1/Politician/src/Politician.h \
  .pio/libdeps/esp32-s3-devkitm-1/Politician/src/PoliticianTypes.h \
  .pio/libdeps/esp32-s3-devkitm-1/Politician/src/PoliticianFormat.h

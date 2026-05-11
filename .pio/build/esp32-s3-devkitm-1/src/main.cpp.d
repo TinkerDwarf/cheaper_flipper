@@ -462,4 +462,7 @@
  src/webstorrage.h \
  C:/.platformio/packages/framework-arduinoespressif32/cores/esp32/HardwareSerial.h \
  src/wifi/wifi_func.h src/wifi/definitions.h src/wifi/deauth.h \
- src/wifi/types.h src/wifi/../SdUsb/SDCardManager.h
+ src/wifi/types.h src/wifi/../SdUsb/SDCardManager.h \
+ .pio/libdeps/esp32-s3-devkitm-1/Politician/src/Politician.h \
+ .pio/libdeps/esp32-s3-devkitm-1/Politician/src/PoliticianTypes.h \
+ .pio/libdeps/esp32-s3-devkitm-1/Politician/src/PoliticianFormat.h

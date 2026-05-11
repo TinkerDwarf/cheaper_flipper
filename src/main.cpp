@@ -3855,7 +3855,7 @@ void viewSavedRFIDTags() {
 //==========================Wi-FI============================
 #include "wifi/wifi_func.h"
 
-WiFiAttackManager wifiAttack(tft, 480, 320, btnUp, btnDown, btnLeft, btnRight, btnOK, "/logs/attack_log.txt", incognitoMode);
+WiFiAttackManager wifiAttack(tft, 480, 320, "/logs/attack_log.txt", incognitoMode);
 
 
 //=====================MAIN===================

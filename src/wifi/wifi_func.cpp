@@ -18,25 +18,18 @@ void pmkOnHandshake(const HandshakeRecord &rec) {
     lastHC22000 = toHC22000(rec);
     handshakeCaptured = true;
 }
+
 // ================== Конструктор ==================
 WiFiAttackManager::WiFiAttackManager(LGFX& display, uint16_t displayWidth, uint16_t displayHeight,
-                                     Bounce& up, Bounce& down, Bounce& left, Bounce& right, Bounce& ok,
                                      const String& logFilePath, bool incognitoMode)
     : tft(display), _w(displayWidth), _h(displayHeight),
-      btnUp(up), btnDown(down), btnLeft(left), btnRight(right), btnOK(ok),
       _logFile(logFilePath), _incognitoMode(incognitoMode),
       _numNetworks(0), _selectedAPIndex(0), _attackMenuPos(0),
-      _isAttacking(false), _currentAttack("")
+      _isAttacking(false), _currentAttack(""), _listOffset(0)
 {}
 
 // ================== Служебные методы ==================
-void WiFiAttackManager::updateButtons() {
-    btnUp.update();
-    btnDown.update();
-    btnLeft.update();
-    btnRight.update();
-    btnOK.update();
-}
+// (updateButtons() больше нет, используем глобальную функцию из buttons.h)
 
 void WiFiAttackManager::logAttack(const String& type, const String& target, const String& status) {
     if (!SDCardManager::isCardPresent() || _incognitoMode) return;
@@ -61,6 +54,7 @@ void WiFiAttackManager::initAttackMode() {
         esp_wifi_set_channel(_aps[_selectedAPIndex].channel, WIFI_SECOND_CHAN_NONE);
     }
 }
+
 // ================== Сканирование и отрисовка списка ==================
 void WiFiAttackManager::scanWiFiNetworks() {
     tft.fillScreen(BLACK);
@@ -84,9 +78,11 @@ void WiFiAttackManager::scanWiFiNetworks() {
     }
 
     _selectedAPIndex = 0;
+    _listOffset = 0;   // сброс страницы после нового сканирования
     saveScanResults();
     drawWiFiList();
 }
+
 void WiFiAttackManager::saveScanResults() {
     if (!SDCardManager::isCardPresent()) return;
     File file = SD_MMC.open("/wifi/wifi_scan_results.txt", FILE_WRITE);
@@ -106,6 +102,7 @@ void WiFiAttackManager::saveScanResults() {
     }
     file.close();
 }
+
 void WiFiAttackManager::drawWiFiList() {
     tft.fillScreen(BLACK);
     tft.setTextColor(WHITE);
@@ -113,10 +110,14 @@ void WiFiAttackManager::drawWiFiList() {
     tft.setCursor(x(10), y(10));
     tft.print("Found: "); tft.print(_numNetworks); tft.print(" networks");
 
-    int maxVis = min(_numNetworks, 7);
-    for (int i = 0; i < maxVis; i++) {
+    // Отрисовываем до 7 элементов, начиная с _listOffset
+    int start = _listOffset;
+    for (int i = 0; i < 7; i++) {
+        int idx = start + i;
+        if (idx >= _numNetworks) break;
+
         int yPos = y(30) + i * y(30);
-        if (i == _selectedAPIndex) {
+        if (idx == _selectedAPIndex) {
             tft.fillRoundRect(x(5), yPos, x(230), y(25), 3, BLUE);
             tft.setTextColor(BLACK);
         } else {
@@ -124,8 +125,8 @@ void WiFiAttackManager::drawWiFiList() {
             tft.setTextColor(WHITE);
         }
         tft.setCursor(x(10), yPos + y(5));
-        tft.print(_aps[i].ssid.substring(0, 20));
-        tft.print(" ("); tft.print(_aps[i].rssi); tft.print("dBm)");
+        tft.print(_aps[idx].ssid.substring(0, 20));
+        tft.print(" ("); tft.print(_aps[idx].rssi); tft.print("dBm)");
     }
 
     tft.setTextColor(LIGHT_GREY);
@@ -136,6 +137,7 @@ void WiFiAttackManager::drawWiFiList() {
     tft.setCursor(x(200), y(280));
     tft.print("Rescan");
 }
+
 // ================== Меню атаки ==================
 void WiFiAttackManager::drawAttackMenu() {
     tft.fillScreen(BLACK);
@@ -219,7 +221,7 @@ void WiFiAttackManager::handleDeauthSingle() {
 
     while (_isAttacking) {
         delay(1000);
-        updateButtons();
+        updateButtons();                       // глобальная функция
         if (btnLeft.fell()) {
             _isAttacking = false;
             stop_deauth();
@@ -236,7 +238,7 @@ void WiFiAttackManager::handleDeauthAll() {
     drawDeauthScreen("ALL", true);
 
     while (_isAttacking) {
-        updateButtons();
+        updateButtons();                       // глобальная функция
         if (btnLeft.fell()) {
             _isAttacking = false;
             stop_deauth();
@@ -258,7 +260,7 @@ void WiFiAttackManager::handleEvilTwin() {
 
     while (_isAttacking) {
         delay(1000);
-        updateButtons();
+        updateButtons();                       // глобальная функция
         if (btnLeft.fell()) {
             _isAttacking = false;
             logAttack("EVIL_TWIN", _currentTarget.ssid, "STOPPED_BY_USER");
@@ -290,20 +292,20 @@ bool WiFiAttackManager::saveHC22000(const String& hc22000, const String& ssid, c
     Serial.println("Saved handshake to " + filename);
     return true;
 }
+
 void pmkOnApFound(const ApRecord &ap) {
-    // Ничего не делаем, колбэк обязателен только для сканирования
+    // колбэк обязателен только для сканирования
 }
+
 void WiFiAttackManager::handlePMKIDSingle() {
     if (_selectedAPIndex >= _numNetworks) return;
     _currentTarget = _aps[_selectedAPIndex];
     _isAttacking = true;
     logAttack("PMKID_ATTACK", _currentTarget.ssid, "STARTED");
 
-    // Останавливаем текущий WiFi
     WiFi.mode(WIFI_OFF);
     delay(100);
 
-    // Инициализируем Politician при первом вызове
     if (!pmkEngineInitialized) {
         Config initialCfg;
         initialCfg.hop_dwell_ms = 200;
@@ -318,18 +320,16 @@ void WiFiAttackManager::handlePMKIDSingle() {
         pmkEngine.clearTarget();
     }
 
-    // Настройка цели
     uint8_t bssid[6];
     memcpy(bssid, _currentTarget.bssid, 6);
     pmkEngine.setAttackMask(ATTACK_PMKID);
     pmkEngine.setEapolCallback(pmkOnHandshake);
     pmkEngine.setTarget(bssid, _currentTarget.channel);
     pmkEngine.lockChannel(_currentTarget.channel);
-    // Очищаем состояние захвата
+
     lastHC22000 = "";
     handshakeCaptured = false;
 
-    // Экран атаки
     tft.fillScreen(BLACK);
     tft.setTextColor(CYAN);
     tft.setTextSize(2);
@@ -352,10 +352,9 @@ void WiFiAttackManager::handlePMKIDSingle() {
     unsigned long lastUpdate = 0;
     while (_isAttacking) {
         pmkEngine.tick();
-        updateButtons();
+        updateButtons();                       // глобальная функция
 
         if (millis() - lastUpdate > 300) {
-            // обновляем экран при необходимости
             if (handshakeCaptured) {
                 tft.fillRect(x(10), y(120), x(220), y(60), BLACK);
                 tft.setTextColor(GREEN);
@@ -394,14 +393,13 @@ void WiFiAttackManager::handlePMKIDSingle() {
         delay(10);
     }
 
-    // Завершение
     pmkEngine.stopHopping();
     pmkEngine.clearTarget();
     WiFi.mode(WIFI_OFF);
     delay(100);
 }
 
-// ================== Главное меню WiFi (запускается из главного меню) ==================
+// ================== Главное меню WiFi ==================
 void WiFiAttackManager::runWiFiMenu() {
     const int NUM_SUB = 5;
     const char* subItems[] = {"Scan Networks", "Deauth ALL", "Beacon Spam", "WPS Attack", "ON/OFF"};
@@ -411,7 +409,7 @@ void WiFiAttackManager::runWiFiMenu() {
     drawSubmenu_I(subPos, subItems, NUM_SUB);
 
     while (inSubMenu) {
-        updateButtons();
+        updateButtons();                       // глобальная функция
 
         if (btnUp.fell() && subPos > 0) { subPos--; drawSubmenu_I(subPos, subItems, NUM_SUB); }
         if (btnDown.fell() && subPos < NUM_SUB-1) { subPos++; drawSubmenu_I(subPos, subItems, NUM_SUB); }
@@ -423,15 +421,23 @@ void WiFiAttackManager::runWiFiMenu() {
                     {
                         bool inList = true;
                         while (inList) {
-                            updateButtons();
-                            if (btnUp.fell() && _selectedAPIndex > 0) { _selectedAPIndex--; drawWiFiList(); }
-                            if (btnDown.fell() && _selectedAPIndex < _numNetworks-1) { _selectedAPIndex++; drawWiFiList(); }
+                            updateButtons();   // глобальная функция
+                            if (btnUp.fell() && _selectedAPIndex > 0) {
+                                _selectedAPIndex--;
+                                if (_selectedAPIndex < _listOffset) _listOffset = _selectedAPIndex;
+                                drawWiFiList();
+                            }
+                            if (btnDown.fell() && _selectedAPIndex < _numNetworks-1) {
+                                _selectedAPIndex++;
+                                if (_selectedAPIndex >= _listOffset + 7) _listOffset = _selectedAPIndex - 6;
+                                drawWiFiList();
+                            }
                             if (btnOK.fell() && _numNetworks > 0) {
                                 _attackMenuPos = 0;
                                 drawAttackMenu();
                                 bool inAttackMenu = true;
                                 while (inAttackMenu) {
-                                    updateButtons();
+                                    updateButtons();   // глобальная функция
                                     if (btnUp.fell() && _attackMenuPos > 0) { _attackMenuPos--; drawAttackMenu(); }
                                     if (btnDown.fell() && _attackMenuPos < 3) { _attackMenuPos++; drawAttackMenu(); }
                                     if (btnOK.fell()) {
@@ -462,40 +468,48 @@ void WiFiAttackManager::runWiFiMenu() {
                     delay(1000);
                     break;
                 case 3: // PMKID Attack
-    scanWiFiNetworks();
-    {
-        bool inList = true;
-        while (inList) {
-            updateButtons();
-            if (btnUp.fell() && _selectedAPIndex > 0) { _selectedAPIndex--; drawWiFiList(); }
-            if (btnDown.fell() && _selectedAPIndex < _numNetworks-1) { _selectedAPIndex++; drawWiFiList(); }
-            if (btnOK.fell() && _numNetworks > 0) {
-                _attackMenuPos = 0;
-                drawAttackMenu();
-                bool inAttackMenu = true;
-                while (inAttackMenu) {
-                    updateButtons();
-                    if (btnUp.fell() && _attackMenuPos > 0) { _attackMenuPos--; drawAttackMenu(); }
-                    if (btnDown.fell() && _attackMenuPos < 3) { _attackMenuPos++; drawAttackMenu(); }
-                    if (btnOK.fell()) {
-                        switch (_attackMenuPos) {
-                            case 0: handleDeauthSingle(); break;
-                            case 2: handlePMKIDSingle(); break;
-                            case 3: handleEvilTwin(); break;
+                    scanWiFiNetworks();
+                    {
+                        bool inList = true;
+                        while (inList) {
+                            updateButtons();   // глобальная функция
+                            if (btnUp.fell() && _selectedAPIndex > 0) {
+                                _selectedAPIndex--;
+                                if (_selectedAPIndex < _listOffset) _listOffset = _selectedAPIndex;
+                                drawWiFiList();
+                            }
+                            if (btnDown.fell() && _selectedAPIndex < _numNetworks-1) {
+                                _selectedAPIndex++;
+                                if (_selectedAPIndex >= _listOffset + 7) _listOffset = _selectedAPIndex - 6;
+                                drawWiFiList();
+                            }
+                            if (btnOK.fell() && _numNetworks > 0) {
+                                _attackMenuPos = 0;
+                                drawAttackMenu();
+                                bool inAttackMenu = true;
+                                while (inAttackMenu) {
+                                    updateButtons();   // глобальная функция
+                                    if (btnUp.fell() && _attackMenuPos > 0) { _attackMenuPos--; drawAttackMenu(); }
+                                    if (btnDown.fell() && _attackMenuPos < 3) { _attackMenuPos++; drawAttackMenu(); }
+                                    if (btnOK.fell()) {
+                                        switch (_attackMenuPos) {
+                                            case 0: handleDeauthSingle(); break;
+                                            case 2: handlePMKIDSingle(); break;
+                                            case 3: handleEvilTwin(); break;
+                                        }
+                                        inAttackMenu = false;
+                                    }
+                                    if (btnLeft.fell()) { inAttackMenu = false; }
+                                    delay(10);
+                                }
+                                drawWiFiList();
+                            }
+                            if (btnRight.fell()) { scanWiFiNetworks(); }
+                            if (btnLeft.fell()) { inList = false; }
+                            delay(10);
                         }
-                        inAttackMenu = false;
                     }
-                    if (btnLeft.fell()) { inAttackMenu = false; }
-                    delay(10);
-                }
-                drawWiFiList();
-            }
-            if (btnRight.fell()) { scanWiFiNetworks(); }
-            if (btnLeft.fell()) { inList = false; }
-            delay(10);
-        }
-    }
-    break;
+                    break;
                 case 4: { // ON/OFF
                     static bool wifiEnabled = false;
                     wifiEnabled = !wifiEnabled;
