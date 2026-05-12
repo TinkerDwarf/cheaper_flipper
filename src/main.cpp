@@ -268,7 +268,7 @@ void drawSubmenu() {
   tft.print("<- Back");
 }
 //===========SD-CARD AND FILE BROWSING-READING=======
-#include "Sd/SDCardManager.h"
+#include "Sd_USB/SDCardManager.h"
 
 SDCardManager sdManager(tft, TFT_WIDTH, TFT_HEIGHT);  // размеры нового дисплея
 
@@ -1023,7 +1023,7 @@ void showBadUSB() {
 
 
 // ==================== MASS STORAGE MENU ====================
-#include "Sd/MassStorageManager.h"
+#include "Sd_USB/MassStorageManager.h"
 MassStorageManager massStorage(tft, TFT_WIDTH, TFT_HEIGHT);  // 320 is height
 
 

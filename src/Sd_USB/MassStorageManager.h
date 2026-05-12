@@ -10,7 +10,7 @@
 #include <WebServer.h>
 #include <ESPmDNS.h>
 #include "webstorrage.h"   // HTML page definition (expected to provide fileManagerHTML)
-#include "../Sd/SDCardManager.h"
+#include "SDCardManager.h"
 
 class MassStorageManager {
 public:
